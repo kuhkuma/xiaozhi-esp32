@@ -6,7 +6,9 @@
 #include "config.h"
 #include "led/single_led.h"
 #include "assets/lang_config.h"
+#include "display/lvgl_display/lvgl_theme.h"
 #include <esp_log.h>
+#include <cstring>
 #include <esp_efuse_table.h>
 #include <driver/i2c_master.h>
 
@@ -127,6 +129,31 @@ public:
         // 由于屏幕是圆的，所以状态栏需要增加左右内边距
         lv_obj_set_style_pad_left(status_bar_, LV_HOR_RES * 0.33, 0);
         lv_obj_set_style_pad_right(status_bar_, LV_HOR_RES * 0.33, 0);
+    }
+
+    // Frodo: remember whether the device is listening so that the idle face
+    // ("neutral") can be swapped for a dedicated "listening" face.
+    virtual void SetStatus(const char* status) override {
+        listening_ = status != nullptr && strcmp(status, Lang::Strings::LISTENING) == 0;
+        SpiLcdDisplay::SetStatus(status);
+    }
+
+    virtual void SetEmotion(const char* emotion) override {
+        // Always apply the requested emotion first. If the asset pack has no
+        // "listening" image, the second call changes nothing and this face stays.
+        SpiLcdDisplay::SetEmotion(emotion);
+        if (listening_ && emotion != nullptr && strcmp(emotion, "neutral") == 0 && HasEmoji("listening")) {
+            SpiLcdDisplay::SetEmotion("listening");
+        }
+    }
+
+private:
+    bool listening_ = false;
+
+    bool HasEmoji(const char* name) {
+        auto theme = static_cast<LvglTheme*>(current_theme_);
+        auto collection = theme != nullptr ? theme->emoji_collection() : nullptr;
+        return collection != nullptr && collection->GetEmojiImage(name) != nullptr;
     }
 };
 
