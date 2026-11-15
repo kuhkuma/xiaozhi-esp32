@@ -7,7 +7,7 @@ on:
       - ci/frodo
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -37,3 +37,19 @@ jobs:
             build/sdkconfig
             sdkconfig
           if-no-files-found: warn
+
+      # The build output is also pushed to a separate branch so it can be
+      # fetched with plain git (artifact downloads need a browser login).
+      - name: Publish binaries to frodo-builds branch
+        shell: bash
+        run: |
+          set -e
+          mkdir -p /tmp/out && cp build/xiaozhi.bin build/merged-binary.bin /tmp/out/
+          cp build/generated_assets.bin build/partition_table/partition-table.bin sdkconfig /tmp/out/ 2>/dev/null || true
+          cd /tmp/out
+          git init -q -b frodo-builds
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Build output of ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" frodo-builds
