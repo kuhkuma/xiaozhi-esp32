@@ -5,7 +5,14 @@
     "builds": [
         {
             "name": "sp-esp32-s3-1.28-box",
-            "sdkconfig_append": ["CONFIG_LANGUAGE_EN_US=y"]
+            "sdkconfig_append": [
+                "CONFIG_LANGUAGE_EN_US=y",
+                "CONFIG_USE_CUSTOM_WAKE_WORD=y",
+                "CONFIG_CUSTOM_WAKE_WORD=\"hey frodo\"",
+                "CONFIG_CUSTOM_WAKE_WORD_DISPLAY=\"Hey Frodo\"",
+                "CONFIG_CUSTOM_WAKE_WORD_THRESHOLD=20",
+                "CONFIG_SR_MN_EN_MULTINET7_QUANT=y"
+            ]
         }
     ]
 }
